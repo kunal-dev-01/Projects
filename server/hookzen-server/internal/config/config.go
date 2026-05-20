@@ -20,13 +20,8 @@ type Config struct {
 	AdminJWT JWTConfig
 	Security SecurityConfig
 	Frontend FrontendConfig
-	AWS      AWSConfig
-	Google   GoogleConfig
-	Github   GitHubConfig
 	App      AppConfig
-	R2       R2Config
 	Logger   LoggerConfig
-	Paddle   PaddleConfig
 	MongoDB  MongoDBConfig
 }
 
@@ -94,9 +89,6 @@ type RabbitMQConfig struct {
 	MaxRetries  int
 	RetryDelay  time.Duration
 	EmailQueue  string
-	AvatarQueue string
-	MediaQueue  string
-	ChatQueue   string
 }
 
 type JWTConfig struct {
@@ -112,7 +104,6 @@ type SecurityConfig struct {
 	RateLimitMax      int
 	MaxSessions       int
 	TOTPEncryptionKey string
-	VaultSecretKey    string
 }
 
 type FrontendConfig struct {
@@ -125,33 +116,6 @@ type FrontendConfig struct {
 	SecretResetUrl        string
 }
 
-type AWSConfig struct {
-	AWSAccessKey string
-	AWSSecretKey string
-	AWSRegion    string
-	AWSFromEmail string
-}
-
-type GoogleConfig struct {
-	ClientID     string
-	ClientSecret string
-	RedirectURL  string
-}
-
-type GitHubConfig struct {
-	ClientID     string
-	ClientSecret string
-	RedirectURL  string
-}
-
-type PaddleConfig struct {
-	Environment   string
-	SellerID      string
-	APIKey        string
-	ClientToken   string
-	WebhookSecret string
-}
-
 type MongoDBConfig struct {
 	Host           string
 	Port           int
@@ -162,14 +126,6 @@ type MongoDBConfig struct {
 	QueryTimeout   time.Duration
 	RetryAttempts  int
 	RetryDelay     time.Duration
-}
-
-type R2Config struct {
-	AccountID  string
-	AccessKey  string
-	SecretKey  string
-	BucketName string
-	PublicURL  string
 }
 
 type LoggerConfig struct {
@@ -234,21 +190,12 @@ func Load() (*Config, error) {
 			MaxRetries:  getEnvAsInt("RABBITMQ_MAX_RETRIES", 5),
 			RetryDelay:  getEnvAsDuration("RABBITMQ_RETRY_DELAY", 5*time.Second),
 			EmailQueue:  getEnv("RABBITMQ_EMAIL_QUEUE", "email_queue"),
-			AvatarQueue: getEnv("RABBITMQ_AVATAR_QUEUE", "avatar_queue"),
-			MediaQueue:  getEnv("RABBITMQ_MEDIA_QUEUE", "media_optimization"),
-			ChatQueue:   getEnv("RABBITMQ_CHAT_QUEUE", "chat_events"),
 		},
 		JWT: JWTConfig{
 			Secret:               getEnv("JWT_SECRET", ""),
 			AccessTokenDuration:  getEnvAsDuration("ACCESS_TOKEN_DURATION", 15*time.Minute),
 			RefreshTokenDuration: getEnvAsDuration("REFRESH_TOKEN_DURATION", 7*24*time.Hour),
-			Issuer:               getEnv("JWT_ISSUER", "upnixo.com"),
-		},
-		AdminJWT: JWTConfig{
-			Secret:               getEnv("ADMIN_JWT_SECRET", ""),
-			AccessTokenDuration:  getEnvAsDuration("ADMIN_ACCESS_TOKEN_DURATION", 15*time.Minute),
-			RefreshTokenDuration: getEnvAsDuration("ADMIN_REFRESH_TOKEN_DURATION", 7*24*time.Hour),
-			Issuer:               getEnv("ADMIN_JWT_ISSUER", "upnixo.com"),
+			Issuer:               getEnv("JWT_ISSUER", "hookzen"),
 		},
 		Security: SecurityConfig{
 			MaxLoginAttempts:  getEnvAsInt("MAX_LOGIN_ATTEMPTS", 5),
@@ -256,39 +203,11 @@ func Load() (*Config, error) {
 			RateLimitMax:      getEnvAsInt("RATE_LIMIT_MAX", 100),
 			MaxSessions:       getEnvAsInt("MAX_SESSIONS", 5),
 			TOTPEncryptionKey: getEnv("TOTP_ENCRYPTION_KEY", "default_totp_encryption_key"),
-			VaultSecretKey:    getEnv("VAULT_SECRET_KEY", "default_32_byte_vault_secret_key_"),
 		},
 		Frontend: FrontendConfig{
 			FrontendUrl:           getEnv("FRONTEND_URL", "http://localhost:3000"),
-			OAuthSuccessURL:       getEnv("OAUTH_SUCCESS_URL", "http://localhost:3000/auth/success"),
-			OAuthErrorURL:         getEnv("OAUTH_ERROR_URL", "http://localhost:3000/auth/error"),
 			VerificationUrl:       getEnv("VERIFICATION_URL", "http://localhost:3000/auth/verify"),
 			ResetUrl:              getEnv("RESET_URL", "http://localhost:3000/auth/reset"),
-			AdminResetPasswordUrl: getEnv("ADMIN_RESET_PASSWORD_URL", "http://localhost:3000/admin/reset-password"),
-			SecretResetUrl:        getEnv("SECRET_RESET_URL", "http://localhost:3000/auth/secret-reset"),
-		},
-		AWS: AWSConfig{
-			AWSAccessKey: getEnv("AWS_ACCESS_KEY_ID", ""),
-			AWSSecretKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
-			AWSRegion:    getEnv("AWS_REGION", "eu-central-1"),
-			AWSFromEmail: getEnv("AWS_FROM_EMAIL", ""),
-		},
-		Google: GoogleConfig{
-			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
-			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
-			RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/google/callback"),
-		},
-		Github: GitHubConfig{
-			ClientID:     getEnv("GITHUB_CLIENT_ID", ""),
-			ClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
-			RedirectURL:  getEnv("GITHUB_REDIRECT_URL", "http://localhost:8080/auth/github/callback"),
-		},
-		Paddle: PaddleConfig{
-			Environment:   getEnv("PADDLE_ENVIRONMENT", "sandbox"),
-			SellerID:      getEnv("PADDLE_SELLER_ID", ""),
-			APIKey:        getEnv("PADDLE_API_KEY", ""),
-			ClientToken:   getEnv("PADDLE_CLIENT_TOKEN", ""),
-			WebhookSecret: getEnv("PADDLE_WEBHOOK_SECRET", ""),
 		},
 		App: AppConfig{
 			AppName:           getEnv("APP_NAME", "Upnixo"),
@@ -324,13 +243,6 @@ func Load() (*Config, error) {
 			EnableCaller:       getEnvAsBool("LOG_ENABLE_CALLER", false),
 			EnableStackTrace:   getEnvAsBool("LOG_ENABLE_STACKTRACE", true),
 		},
-		R2: R2Config{
-			AccountID:  getEnv("R2_ACCOUNT_ID", ""),
-			AccessKey:  getEnv("R2_ACCESS_KEY", ""),
-			SecretKey:  getEnv("R2_SECRET_KEY", ""),
-			BucketName: getEnv("R2_BUCKET_NAME", ""),
-			PublicURL:  getEnv("R2_PUBLIC_URL", "http://upraizo.com"),
-		},
 		MongoDB: MongoDBConfig{
 			Host:           getEnv("MONGO_HOST", "localhost"),
 			Port:           getEnvAsInt("MONGO_PORT", 27017),
@@ -358,26 +270,6 @@ func Load() (*Config, error) {
 
 	if cfg.App.IsProduction() && cfg.Redis.Password == "" {
 		return nil, fmt.Errorf("REDIS_PASSWORD is required in production")
-	}
-
-	if cfg.AWS.AWSAccessKey == "" {
-		return nil, fmt.Errorf("AWS_ACCESS_KEY_ID is required")
-	}
-
-	if cfg.AWS.AWSSecretKey == "" {
-		return nil, fmt.Errorf("AWS_SECRET_ACCESS_KEY is required")
-	}
-
-	if cfg.Google.ClientID == "" {
-		return nil, fmt.Errorf("GOOGLE_CLIENT_ID is required")
-	}
-
-	if cfg.Paddle.APIKey == "" {
-		return nil, fmt.Errorf("PADDLE_API_KEY is required")
-	}
-
-	if cfg.App.IsProduction() && cfg.Paddle.WebhookSecret == "" {
-		return nil, fmt.Errorf("PADDLE_WEBHOOK_SECRET is required in production")
 	}
 
 	validLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
