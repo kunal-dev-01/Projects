@@ -20,6 +20,7 @@ type Config struct {
 	AdminJWT JWTConfig
 	Security SecurityConfig
 	Frontend FrontendConfig
+	Resend   ResendConfig
 	App      AppConfig
 	Logger   LoggerConfig
 	MongoDB  MongoDBConfig
@@ -96,6 +97,11 @@ type JWTConfig struct {
 	AccessTokenDuration  time.Duration
 	RefreshTokenDuration time.Duration
 	Issuer               string
+}
+
+type ResendConfig struct {
+	APIKey    string
+	FromEmail string
 }
 
 type SecurityConfig struct {
@@ -209,6 +215,10 @@ func Load() (*Config, error) {
 			VerificationUrl:       getEnv("VERIFICATION_URL", "http://localhost:3000/auth/verify"),
 			ResetUrl:              getEnv("RESET_URL", "http://localhost:3000/auth/reset"),
 		},
+		Resend: ResendConfig{
+			APIKey:    getEnv("RESEND_API_KEY", ""),
+			FromEmail: getEnv("RESEND_FROM_EMAIL", ""),
+		},
 		App: AppConfig{
 			AppName:           getEnv("APP_NAME", "Upnixo"),
 			Env:               getEnv("ENV", "development"),
@@ -262,6 +272,10 @@ func Load() (*Config, error) {
 
 	if cfg.JWT.Secret == "" {
 		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
+
+	if cfg.Resend.APIKey == "" {
+		return nil, fmt.Errorf("RESEND_API_KEY is required")
 	}
 
 	if len(cfg.JWT.Secret) < 32 {
