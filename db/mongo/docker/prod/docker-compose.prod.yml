@@ -1,0 +1,72 @@
+services:
+  mongo_db:
+    image: mongo:7.0-bookworm
+    container_name: mongo_prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    volumes:
+      - mongo_prod_data:/data/db
+      - ./mongod.conf:/etc/mongod.conf:ro
+      - ./init-replica.sh:/etc/mongo-scripts/init-replica.sh:ro
+      - mongo_key:/etc/mongo
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        # Generate replica.key if it doesn't exist
+        if [ ! -f /etc/mongo/replica.key ]; then
+          mkdir -p /etc/mongo
+          head -c 1024 /dev/urandom | base64 > /etc/mongo/replica.key
+          chmod 400 /etc/mongo/replica.key
+          chown mongodb:mongodb /etc/mongo/replica.key
+        fi
+        
+        # Start initialization script in the background
+        bash /etc/mongo-scripts/init-replica.sh &
+        
+        # Start MongoDB
+        exec docker-entrypoint.sh "$$@"
+      - "--"
+    networks:
+      - shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongo_backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    container_name: mongo_backup_prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      - MONGO_HOST=mongo_db
+      - MONGO_PORT=27017
+      # Other variables (MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, S3_BUCKET, S3_PREFIX, AWS_ACCESS_KEY_ID, etc.)
+      # should be provided in .env.prod
+    depends_on:
+      - mongo_db
+    networks:
+      - shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mongo_prod_data:
+    name: mongo_prod_data
+  mongo_key:
+    name: mongo_prod_key
+
+networks:
+  shared_net:
+    external: true
+    name: global_shared_network

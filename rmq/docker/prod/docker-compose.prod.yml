@@ -1,0 +1,33 @@
+services:
+  rmq:
+    image: rabbitmq:3-management
+    container_name: rmq_prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-erl_MAX_PORTS 4096"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - rmq_prod_data:/var/lib/rabbitmq
+    networks:
+      - shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  rmq_prod_data:
+    name: rmq_prod_data
+
+networks:
+  shared_net:
+    external: true
+    name: global_shared_network

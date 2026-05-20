@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/* ===============================
+   Fonts Setup 
+   =============================== */
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrainsMono";
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrainsMono";
+  src: url("/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrainsMono";
+  src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "JetBrainsMono", monospace;
+  --font-heading: "Satoshi", sans-serif;
+
+  --color-hacker-green: #00ff41;
+  --color-hacker-cyan: #00f3ff;
+}
+
+:root {
+  line-height: 1.6;
+  color-scheme: dark;
+
+  --font-sans: "JetBrainsMono", monospace;
+  --font-heading: "Satoshi", sans-serif;
+
+  --bg-primary: #09090b;
+  --bg-secondary: #14171c;
+  --text-primary: #f0f2f5;
+  --text-secondary: #71767b;
+  --border-subtle: #1d2127;
+  --accent: #00ff41;
+  --accent-cyan: #00f3ff;
+
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-primary);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===============================
+   Sonner Toast Theme (Premium Monochrome)
+   =============================== */
+
+.dark [data-sonner-toast],
+[data-sonner-toast] {
+  background: #09090b !important;
+  color: #fafafa !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 12px !important;
+}
+.light [data-sonner-toast] {
+  background: #ffffff !important;
+  color: #09090b !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+[data-sonner-toast] svg {
+  color: inherit !important;
+}
+[data-sonner-toast] * {
+  border-radius: inherit;
+}
+[data-sonner-toast] [data-close-button] {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* ============== fade in animation  ============== */
+
+.fade-in {
+  animation: fade-in 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,33 @@
+services:
+  redis_db:
+    image: redis:7-bookworm
+    container_name: redis_dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    command: >
+      /bin/sh -c '
+      redis-server /usr/local/etc/redis/redis.conf 
+      --requirepass "$$REDIS_PASSWORD"
+      '
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_dev_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - dev_shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis_dev_data:
+    name: redis_dev_data
+
+networks:
+  dev_shared_net:
+    external: true
+    name: dev_shared_network

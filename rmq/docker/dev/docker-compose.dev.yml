@@ -1,0 +1,35 @@
+services:
+  rmq:
+    image: rabbitmq:3-management
+    container_name: rmq_dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
+    ports:
+      - "127.0.0.1:${RMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RMQ_UI_PORT:-15672}:15672"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - rmq_dev_data:/var/lib/rabbitmq
+    networks:
+      - dev_shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  rmq_dev_data:
+    name: rmq_dev_data
+
+networks:
+  dev_shared_net:
+    external: true
+    name: dev_shared_network

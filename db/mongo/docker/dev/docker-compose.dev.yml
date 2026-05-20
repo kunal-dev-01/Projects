@@ -1,0 +1,50 @@
+services:
+  mongo_db:
+    image: mongo:7.0-bookworm
+    container_name: mongo_dev
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    ports:
+      - "127.0.0.1:27017:27017" # Expose only to localhost for local tools (Compass, Prisma)
+    volumes:
+      - mongo_dev_data:/data/db
+      - ./mongod.conf:/etc/mongod.conf:ro
+      - ./init-replica.sh:/etc/mongo-scripts/init-replica.sh:ro
+      - mongo_dev_key:/etc/mongo
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        # Generate replica.key if it doesn't exist
+        if [ ! -f /etc/mongo/replica.key ]; then
+          mkdir -p /etc/mongo
+          head -c 1024 /dev/urandom | base64 > /etc/mongo/replica.key
+          chmod 400 /etc/mongo/replica.key
+          chown mongodb:mongodb /etc/mongo/replica.key
+        fi
+        
+        # Start initialization script in the background
+        bash /etc/mongo-scripts/init-replica.sh &
+        
+        # Start MongoDB
+        exec docker-entrypoint.sh "$$@"
+      - "--"
+    networks:
+      - dev_shared_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mongo_dev_data:
+    name: mongo_dev_data
+  mongo_dev_key:
+    name: mongo_dev_key
+
+networks:
+  dev_shared_net:
+    name: dev_shared_network
