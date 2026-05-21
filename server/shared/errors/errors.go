@@ -67,6 +67,7 @@ func IsConflict(err error) bool {
 	return false
 }
 
+
 /* ───────────────── Centralized Fiber Middleware ───────────────── */
 
 func FiberErrorHandler(c *fiber.Ctx, err error) error {

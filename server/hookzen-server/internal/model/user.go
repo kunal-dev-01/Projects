@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"database/sql/driver"
@@ -92,4 +92,10 @@ type UserPreferences struct {
 	Notifications WebhookNotifications `json:"notifications" db:"notifications"`
 	Language      string               `json:"language" db:"language"`
 	UpdatedAt     time.Time            `json:"updated_at" db:"updated_at"`
+}
+
+// UserWithPrefs is a composite struct for joining HookzenUser with UserPreferences in queries.
+type UserWithPrefs struct {
+	User        HookzenUser     `db:"u"`
+	Preferences UserPreferences `db:"p"`
 }
