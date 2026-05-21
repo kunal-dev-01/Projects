@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hookzen · Password Reset</title>
+    <style type="text/css">
+      /* === RESET & SHARP TECH DARK MODE === */
+      * {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        border-radius: 0 !important; /* STRICT SHARP CORNERS */
+      }
+
+      body,
+      .main-body {
+        background-color: #000000 !important; /* Deep obsidian black */
+        font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        color: #f9fafb !important; /* High contrast crisp white text */
+      }
+
+      /* === RESPONSIVE METRICS === */
+      @media only screen and (max-width: 600px) {
+        .outer-padding-wrapper {
+          padding: 0 !important;
+        }
+        .content-box {
+          border: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 32px 20px !important;
+          background-color: #000000 !important; /* Flat dark integration for mobile */
+        }
+        .reset-button {
+          width: 100% !important;
+          text-align: center !important;
+          justify-content: center !important;
+        }
+      }
+
+      @media only screen and (min-width: 601px) {
+        .outer-padding-wrapper {
+          padding: 60px 20px !important;
+        }
+        .content-box {
+          border: 1px solid #1e1f21 !important; /* Ultra thin slate border line */
+          background-color: #000000 !important; /* Slate-core dark container box */
+          padding: 48px !important;
+          max-width: 560px !important;
+          margin: 0 auto !important;
+        }
+      }
+
+      /* === MODERN LINE INFRASTRUCTURE ELEMENTS === */
+      .brand-tag {
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        padding: 4px 10px !important;
+        border: 1px solid #1e1f21 !important;
+        background-color: #141313 !important;
+        display: inline-block !important;
+        color: #9ca3af !important;
+        text-transform: uppercase !important;
+      }
+
+      .info-callout {
+        background-color: #141313 !important;
+        border-left: 2px solid #1e1f21 !important;
+        padding: 14px 18px !important;
+        margin-bottom: 24px !important;
+        font-size: 12px !important;
+        color: #9ca3af !important;
+        line-height: 1.5 !important;
+      }
+
+      .reset-button {
+        display: inline-flex !important;
+        align-items: center !important;
+        background-color: #ffffff !important; /* Solid stark white button block for maximum contrast */
+        color: #030712 !important;
+        text-decoration: none !important;
+        padding: 14px 28px !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+      }
+
+      hr {
+        border: none !important;
+        border-top: 1px solid #1e1f21 !important;
+        margin: 32px 0 !important;
+      }
+    </style>
+  </head>
+  <body class="main-body">
+    <div class="outer-padding-wrapper">
+      <div class="content-box">
+        
+        <div style="margin-bottom: 28px !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+          <div class="brand-tag">Hookzen // by upnixo</div>
+          <div style="font-size: 10px !important; color: #4b5563 !important; text-transform: uppercase;">[Security_Reset]</div>
+        </div>
+
+        <h1 style="font-size: 20px !important; font-weight: 600 !important; color: #f9fafb !important; letter-spacing: -0.3px !important; margin-bottom: 16px !important;">
+          Reset Your Account Credentials
+        </h1>
+
+        <p style="font-size: 13px !important; line-height: 1.6 !important; color: #9ca3af !important; margin-bottom: 24px !important;">
+          An execution event has initialized a credential recovery handshake for your account. Please follow the secure link below to overwrite your existing password parameters.
+        </p>
+
+        <div style="margin-bottom: 12px !important;">
+          <a href="{{.reset_link}}" class="reset-button">
+            Reset Password Credentials
+          </a>
+        </div>
+        
+        <div style="font-size: 11px !important; color: #4b5563 !important; margin-bottom: 28px !important;">
+          Request ID: SHA256-{{.request_id}} &bull; Link recovery window expires in 60 minutes.
+        </div>
+
+        <div class="info-callout">
+          Notice: This recovery link is single-use only. Upon successful execution of this handshake event, all other active device sessions for this account will be forcefully terminated dynamically for account preservation.
+        </div>
+
+        <hr />
+
+        <div style="display: flex !important; justify-content: space-between !important; align-items: center !important;">
+          <div style="font-size: 10px !important; color: #4b5563 !important; line-height: 1.5 !important;">
+            &copy; 2026 Hookzen by Upnixo Systems.<br />
+            Automated Webhook Infrastructure Routing
+          </div>
+          <div style="color: #9ca3af !important; font-size: 10px !important; font-weight: 600 !important; letter-spacing: 0.5px;">
+            OVERRIDE // PENDING
+          </div>
+        </div>
+
+        <div style="margin-top: 28px !important; font-size: 9px !important; color: #374151 !important; text-align: center !important; border-top: 1px dashed #1f2937 !important; padding-top: 16px !important;">
+          Terminal Payload Hook: curl -X POST "{{.reset_link}}" -H "X-Action: Reset"
+        </div>
+
+      </div>
+    </div>
+  </body>
+</html>
