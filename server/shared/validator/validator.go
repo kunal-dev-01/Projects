@@ -7,29 +7,33 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 
-	sharedErrs "shared/errors" 
+	sharedErrs "shared/errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shopspring/decimal"
 )
 
-var (
+type Validator struct {
 	validate *validator.Validate
-	once     sync.Once
-)
+}
 
-func GetValidator() *validator.Validate {
-	once.Do(func() {
-		validate = validator.New()
-		registerCustomValidations(validate)
+func New() *Validator {
+	v := validator.New()
+	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
 	})
-	return validate
+	
+	instance := &Validator{validate: v}
+	instance.registerCustomValidations()
+	return instance
 }
 
 /* ───────────────── Pre-Compiled Regular Expressions ───────────────── */
-
 var (
 	nameRegex     = regexp.MustCompile(`^[a-zA-Z\s]{2,50}$`)
 	phoneRegex    = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
@@ -40,92 +44,6 @@ var (
 	hasSpecial    = regexp.MustCompile(`[!@#$%^&*]`)
 	hasWhitespace = regexp.MustCompile(`\s`)
 )
-
-/* ───────────────── Custom Core Field Validations ───────────────── */
-
-func registerCustomValidations(v *validator.Validate) {
-	v.RegisterValidation("secure_password", func(fl validator.FieldLevel) bool {
-		return IsStrongPassword(fl.Field().String())
-	})
-
-	v.RegisterValidation("valid_name", func(fl validator.FieldLevel) bool {
-		return IsValidName(fl.Field().String())
-	})
-
-	v.RegisterValidation("phone", func(fl validator.FieldLevel) bool {
-		return IsValidPhone(fl.Field().String())
-	})
-
-	v.RegisterValidation("slug", func(fl validator.FieldLevel) bool {
-		return IsValidSlug(fl.Field().String())
-	})
-
-	v.RegisterValidation("no_space", func(fl validator.FieldLevel) bool {
-		return !hasWhitespace.MatchString(fl.Field().String())
-	})
-
-	v.RegisterValidation("d_gte_zero", func(fl validator.FieldLevel) bool {
-		d, ok := toDecimal(fl.Field())
-		return ok && d.GreaterThanOrEqual(decimal.Zero)
-	})
-
-	v.RegisterValidation("d_gt_zero", func(fl validator.FieldLevel) bool {
-		d, ok := toDecimal(fl.Field())
-		return ok && d.GreaterThan(decimal.Zero)
-	})
-
-	v.RegisterValidation("d_gte", func(fl validator.FieldLevel) bool {
-		d, ok := toDecimal(fl.Field())
-		if !ok {
-			return false
-		}
-		param := fl.Param()
-		if param == "" {
-			return d.GreaterThanOrEqual(decimal.Zero)
-		}
-		p, err := decimal.NewFromString(param)
-		if err != nil {
-			return false
-		}
-		return d.GreaterThanOrEqual(p)
-	})
-
-	v.RegisterValidation("d_gt_field", func(fl validator.FieldLevel) bool {
-		d, ok := toDecimal(fl.Field())
-		if !ok {
-			return false
-		}
-		otherD, ok := getDecimalField(fl, fl.Param())
-		if !ok {
-			return false
-		}
-		return d.GreaterThan(otherD)
-	})
-
-	v.RegisterValidation("i_gte", func(fl validator.FieldLevel) bool {
-		val, err := strconv.ParseInt(fmt.Sprintf("%v", fl.Field().Interface()), 10, 64)
-		if err != nil {
-			return false
-		}
-		param, err := strconv.ParseInt(fl.Param(), 10, 64)
-		if err != nil {
-			return false
-		}
-		return val >= param
-	})
-
-	v.RegisterValidation("i_lte", func(fl validator.FieldLevel) bool {
-		val, err := strconv.ParseInt(fmt.Sprintf("%v", fl.Field().Interface()), 10, 64)
-		if err != nil {
-			return false
-		}
-		param, err := strconv.ParseInt(fl.Param(), 10, 64)
-		if err != nil {
-			return false
-		}
-		return val <= param
-	})
-}
 
 /* ───────────────── Struct Evaluators ───────────────── */
 
@@ -140,8 +58,9 @@ type ValidationResult struct {
 	Fields map[string]string `json:"fields,omitempty"`
 }
 
-func ValidateStruct(s interface{}) *ValidationResult {
-	err := GetValidator().Struct(s)
+// Method linked to *Validator struct
+func (v *Validator) ValidateStruct(s any) *ValidationResult {
+	err := v.validate.Struct(s)
 	if err == nil {
 		return &ValidationResult{Valid: true}
 	}
@@ -174,17 +93,103 @@ func ValidateStruct(s interface{}) *ValidationResult {
 	return result
 }
 
-// ValidateStructToAppError processes mapping cleanly into shared domain error payloads
-func ValidateStructToAppError(s interface{}) *sharedErrs.AppError {
-	result := ValidateStruct(s)
+// ValidateStructToAppError ab sharedErrs.Validation ko sahi se use karega
+func (v *Validator) ValidateStructToAppError(s any) *sharedErrs.AppError {
+	result := v.ValidateStruct(s)
 	if result.Valid {
 		return nil
 	}
 	return sharedErrs.Validation("Input validation failed", result.Fields)
 }
 
-func ValidateVar(field interface{}, tag string) error {
-	return GetValidator().Var(field, tag)
+func (v *Validator) ValidateVar(field any, tag string) error {
+	return v.validate.Var(field, tag)
+}
+
+/* ───────────────── Custom Core Field Validations ───────────────── */
+
+func (v *Validator) registerCustomValidations() {
+	v.validate.RegisterValidation("secure_password", func(fl validator.FieldLevel) bool {
+		return IsStrongPassword(fl.Field().String())
+	})
+
+	v.validate.RegisterValidation("valid_name", func(fl validator.FieldLevel) bool {
+		return IsValidName(fl.Field().String())
+	})
+
+	v.validate.RegisterValidation("phone", func(fl validator.FieldLevel) bool {
+		return IsValidPhone(fl.Field().String())
+	})
+
+	v.validate.RegisterValidation("slug", func(fl validator.FieldLevel) bool {
+		return IsValidSlug(fl.Field().String())
+	})
+
+	v.validate.RegisterValidation("no_space", func(fl validator.FieldLevel) bool {
+		return !hasWhitespace.MatchString(fl.Field().String())
+	})
+
+	v.validate.RegisterValidation("d_gte_zero", func(fl validator.FieldLevel) bool {
+		d, ok := toDecimal(fl.Field())
+		return ok && d.GreaterThanOrEqual(decimal.Zero)
+	})
+
+	v.validate.RegisterValidation("d_gt_zero", func(fl validator.FieldLevel) bool {
+		d, ok := toDecimal(fl.Field())
+		return ok && d.GreaterThan(decimal.Zero)
+	})
+
+	v.validate.RegisterValidation("d_gte", func(fl validator.FieldLevel) bool {
+		d, ok := toDecimal(fl.Field())
+		if !ok {
+			return false
+		}
+		param := fl.Param()
+		if param == "" {
+			return d.GreaterThanOrEqual(decimal.Zero)
+		}
+		p, err := decimal.NewFromString(param)
+		if err != nil {
+			return false
+		}
+		return d.GreaterThanOrEqual(p)
+	})
+
+	v.validate.RegisterValidation("d_gt_field", func(fl validator.FieldLevel) bool {
+		d, ok := toDecimal(fl.Field())
+		if !ok {
+			return false
+		}
+		otherD, ok := getDecimalField(fl, fl.Param())
+		if !ok {
+			return false
+		}
+		return d.GreaterThan(otherD)
+	})
+
+	v.validate.RegisterValidation("i_gte", func(fl validator.FieldLevel) bool {
+		val, err := strconv.ParseInt(fmt.Sprintf("%v", fl.Field().Interface()), 10, 64)
+		if err != nil {
+			return false
+		}
+		param, err := strconv.ParseInt(fl.Param(), 10, 64)
+		if err != nil {
+			return false
+		}
+		return val >= param
+	})
+
+	v.validate.RegisterValidation("i_lte", func(fl validator.FieldLevel) bool {
+		val, err := strconv.ParseInt(fmt.Sprintf("%v", fl.Field().Interface()), 10, 64)
+		if err != nil {
+			return false
+		}
+		param, err := strconv.ParseInt(fl.Param(), 10, 64)
+		if err != nil {
+			return false
+		}
+		return val <= param
+	})
 }
 
 /* ───────────────── Primitives Pure Checkers ───────────────── */
@@ -199,11 +204,11 @@ func IsStrongPassword(password string) bool {
 		hasSpecial.MatchString(password)
 }
 
-func IsValidEmail(email string) bool {
-	return ValidateVar(email, "required,email") == nil
+func (v *Validator) IsValidEmail(email string) bool {
+	return v.ValidateVar(email, "required,email") == nil
 }
 
-func IsValidName(name string) bool { return nameRegex.MatchString(name) }
+func IsValidName(name string) bool   { return nameRegex.MatchString(name) }
 func IsValidPhone(phone string) bool { return phoneRegex.MatchString(phone) }
 
 func IsValidURL(input string) bool {
@@ -228,15 +233,15 @@ func IsValidAvatar(avatarURL string) bool {
 		strings.HasSuffix(lower, ".webp")
 }
 
-func IsValidSlug(slug string) bool { return slugRegex.MatchString(slug) && len(slug) <= 100 }
-func IsPositiveInt(n int64) bool  { return n > 0 }
+func IsValidSlug(slug string) bool     { return slugRegex.MatchString(slug) && len(slug) <= 100 }
+func IsPositiveInt(n int64) bool       { return n > 0 }
 func IsInRange(n, min, max int64) bool { return n >= min && n <= max }
-func IsValidPort(port int) bool    { return port > 0 && port <= 65535 }
+func IsValidPort(port int) bool        { return port > 0 && port <= 65535 }
 
 /* ───────────────── Internal Parsing Engines ───────────────── */
 
 func toDecimal(field reflect.Value) (decimal.Decimal, bool) {
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		if field.IsNil() {
 			return decimal.Zero, false
 		}

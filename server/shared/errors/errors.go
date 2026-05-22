@@ -67,6 +67,13 @@ func IsConflict(err error) bool {
 	return false
 }
 
+func IsNotFound(err error) bool {
+    if appErr, ok := errors.AsType[*AppError](err); ok {
+        return appErr.Code == http.StatusNotFound
+    }
+    return false
+}
+
 
 /* ───────────────── Centralized Fiber Middleware ───────────────── */
 

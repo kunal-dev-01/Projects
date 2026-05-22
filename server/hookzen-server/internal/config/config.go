@@ -110,6 +110,7 @@ type SecurityConfig struct {
 	RateLimitMax      int
 	MaxSessions       int
 	TOTPEncryptionKey string
+	EmailVerificationTTL time.Duration
 }
 
 type FrontendConfig struct {
@@ -209,6 +210,7 @@ func Load() (*Config, error) {
 			RateLimitMax:      getEnvAsInt("RATE_LIMIT_MAX", 100),
 			MaxSessions:       getEnvAsInt("MAX_SESSIONS", 5),
 			TOTPEncryptionKey: getEnv("TOTP_ENCRYPTION_KEY", "default_totp_encryption_key"),
+			EmailVerificationTTL: getEnvAsDuration("EMAIL_VERIFICATION_TTL", 24*time.Hour),
 		},
 		Frontend: FrontendConfig{
 			FrontendUrl:           getEnv("FRONTEND_URL", "http://localhost:3000"),

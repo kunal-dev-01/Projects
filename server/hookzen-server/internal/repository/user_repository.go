@@ -19,6 +19,7 @@ import (
 // ─────────────────────────────────────────────────────────────────────────────
 
 type UserRepository interface {
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	Register(ctx context.Context, params RegisterParams) (*model.HookzenUser, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*model.HookzenUser, *model.UserPreferences, error)
 	GetByEmail(ctx context.Context, email string) (*model.HookzenUser, *model.UserPreferences, error)
@@ -105,6 +106,19 @@ func NewUserRepository(db *pgxpool.Pool) UserRepository {
 // ─────────────────────────────────────────────────────────────────────────────
 // OPERATIONS IMPLEMENTATION
 // ─────────────────────────────────────────────────────────────────────────────
+
+func (r *userRepo) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	const sql = `SELECT EXISTS(SELECT 1 FROM hookzen_users WHERE email = @email AND deleted_at IS NULL)`
+
+	var exists bool
+	err := r.db.QueryRow(ctx, sql, pgx.NamedArgs{"email": email}).Scan(&exists)
+	if err != nil {
+		logging.Error("repo: check user existence by email query failed", err, nil)
+		return false, sharedErrs.Internal(err)
+	}
+
+	return exists, nil
+}
 
 func (r *userRepo) Register(ctx context.Context, params RegisterParams) (*model.HookzenUser, error) {
 	var user model.HookzenUser

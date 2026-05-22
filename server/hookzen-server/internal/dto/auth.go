@@ -34,6 +34,10 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type ResendVerificationEmailRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NESTED PREFERENCES RESPONSES (Webhook Gateway Metrics)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,7 +78,7 @@ type AuthResponse struct {
 }
 
 // RegisterResponse represents the immediate response contract after registration.
-type RegisterResponse struct {
+type MessageResponse struct {
 	Message string `json:"message"`
 }
 
