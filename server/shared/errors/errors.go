@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"shared/logging" 
+	"shared/logging"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -38,15 +38,16 @@ func Wrap(err error, code int, message string) *AppError {
 	return &AppError{Code: code, Message: message, Err: err}
 }
 
-func BadRequest(message string) *AppError { return New(http.StatusBadRequest, message) }
-func Unauthorized(message string) *AppError { return New(http.StatusUnauthorized, message) }
-func Forbidden(message string) *AppError    { return New(http.StatusForbidden, message) }
-func NotFound(message string) *AppError     { return New(http.StatusNotFound, message) }
-func Conflict(message string) *AppError     { return New(http.StatusConflict, message) }
+func BadRequest(message string) *AppError      { return New(http.StatusBadRequest, message) }
+func Unauthorized(message string) *AppError    { return New(http.StatusUnauthorized, message) }
+func Forbidden(message string) *AppError       { return New(http.StatusForbidden, message) }
+func NotFound(message string) *AppError        { return New(http.StatusNotFound, message) }
+func Conflict(message string) *AppError        { return New(http.StatusConflict, message) }
+func TooManyRequests(message string) *AppError { return New(http.StatusTooManyRequests, message) }
+
 func Unprocessable(message string) *AppError {
 	return New(http.StatusUnprocessableEntity, message)
 }
-func TooManyRequests(message string) *AppError { return New(http.StatusTooManyRequests, message) }
 
 func Validation(message string, fields map[string]string) *AppError {
 	return &AppError{
@@ -60,30 +61,32 @@ func Internal(err error) *AppError {
 	return Wrap(err, http.StatusInternalServerError, "something went wrong, please try again later")
 }
 
+/* ───────────────── Helper Checkers ───────────────── */
+
 func IsConflict(err error) bool {
-	if e, ok := err.(*AppError); ok {
-		return e.Code == http.StatusConflict
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Code == http.StatusConflict
 	}
 	return false
 }
 
 func IsNotFound(err error) bool {
-    if appErr, ok := errors.AsType[*AppError](err); ok {
-        return appErr.Code == http.StatusNotFound
-    }
-    return false
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Code == http.StatusNotFound
+	}
+	return false
 }
-
 
 /* ───────────────── Centralized Fiber Middleware ───────────────── */
 
 func FiberErrorHandler(c *fiber.Ctx, err error) error {
 	code, message, fields := parseError(err)
-
-	// Log metrics/errors strictly based on domain statuses
 	log := logging.Get().WithFiberCtx(c)
-	var appErr *AppError
 
+	// Logging based on domain and error origin
+	var appErr *AppError
 	if errors.As(err, &appErr) {
 		if code >= 500 {
 			log.Error().Err(appErr.Err).Msg("internal app error")
@@ -91,10 +94,15 @@ func FiberErrorHandler(c *fiber.Ctx, err error) error {
 			log.Warn().Str("error", appErr.Message).Msg("client request error")
 		}
 	} else {
-		log.Error().Err(err).Msg("unhandled server error")
+		// Handles raw errors or standard fiber primitives
+		if code >= 500 {
+			log.Error().Err(err).Msg("unhandled server error")
+		} else {
+			log.Warn().Err(err).Msg("unhandled client wrapper error")
+		}
 	}
 
-	// Prepare standard API contract structure
+	// Dynamic API contract mapping
 	errBody := fiber.Map{
 		"code":    code,
 		"message": message,
