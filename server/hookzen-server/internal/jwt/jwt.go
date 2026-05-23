@@ -20,7 +20,7 @@ type TokenType string
 const (
 	TokenAccess       TokenType = "access"
 	TokenRefresh      TokenType = "refresh"
-	TokenTwoFAPending TokenType = "2fa_pending" // Password verification pass hone ke baad, bfr 2FA verification
+	TokenTwoFAPending TokenType = "2fa_pending"
 )
 
 // CustomClaims represents the streamlined compact Hookzen JWT structure.
@@ -149,7 +149,7 @@ func ExtractToken(authHeader string) (string, error) {
 
 	parts := strings.SplitN(authHeader, " ", 2)
 	if len(parts) != 2 || parts[0] != "Bearer" || parts[1] == "" {
-		return "", sharedErrs.Unauthorized("invalid authorization payload alignment format — utilize: Bearer <token>")
+		return "", sharedErrs.Unauthorized("invalid authorization payload alignment format")
 	}
 
 	return parts[1], nil
