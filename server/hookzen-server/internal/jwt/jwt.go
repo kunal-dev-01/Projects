@@ -10,7 +10,6 @@ import (
 	"hookzen-server/internal/model"
 
 	sharedErrs "shared/errors"
-	"shared/logging"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -40,14 +39,14 @@ type TokenPair struct {
 }
 
 type JWTManager struct {
-	cfg         *config.JWTConfig
-	secretBytes []byte
+	cfg           *config.JWTConfig
+	secretBytes   []byte
 }
 
 func NewJWTManager(cfg *config.JWTConfig) *JWTManager {
 	return &JWTManager{
-		cfg:         cfg,
-		secretBytes: []byte(cfg.Secret),
+		cfg:           cfg,
+		secretBytes:   []byte(cfg.Secret),
 	}
 }
 
@@ -55,7 +54,6 @@ func NewJWTManager(cfg *config.JWTConfig) *JWTManager {
 // CRYPTOGRAPHIC TOKEN GENERATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-// GenerateTokenPair creates localized access + refresh cryptographic strings simultaneously.
 func (m *JWTManager) GenerateTokenPair(user *model.HookzenUser, sessionID string) (*TokenPair, error) {
 	accessToken, err := m.generate(user.ID, user.Email, user.TwoFactorEnabled, TokenAccess, m.cfg.AccessTokenDuration, sessionID)
 	if err != nil {
@@ -74,14 +72,8 @@ func (m *JWTManager) GenerateTokenPair(user *model.HookzenUser, sessionID string
 	}, nil
 }
 
-// GenerateTwoFAPendingToken issues a 5-minute transient window token before 2FA challenge execution.
 func (m *JWTManager) GenerateTwoFAPendingToken(user *model.HookzenUser, sessionID string) (string, error) {
 	return m.generate(user.ID, user.Email, user.TwoFactorEnabled, TokenTwoFAPending, 5*time.Minute, sessionID)
-}
-
-// GenerateAccessToken produces an isolated new access string during fresh rotation check executions.
-func (m *JWTManager) GenerateAccessToken(userID uuid.UUID, email string, twoFactor bool, sessionID string) (string, error) {
-	return m.generate(userID, email, twoFactor, TokenAccess, m.cfg.AccessTokenDuration, sessionID)
 }
 
 func (m *JWTManager) generate(userID uuid.UUID, email string, twoFactor bool, tokenType TokenType, duration time.Duration, sessionID string) (string, error) {
@@ -98,14 +90,13 @@ func (m *JWTManager) generate(userID uuid.UUID, email string, twoFactor bool, to
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 			NotBefore: jwt.NewNumericDate(now),
-			ID:        sessionID, // Maps into the atomic tracking Redis Key directly
+			ID:        sessionID,
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString(m.secretBytes)
 	if err != nil {
-		logging.Error("security: token cryptographic sign signature aborted", err, nil)
 		return "", sharedErrs.Internal(err)
 	}
 
@@ -116,7 +107,6 @@ func (m *JWTManager) generate(userID uuid.UUID, email string, twoFactor bool, to
 // PARSING & VERIFICATION INTERCEPTORS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ValidateToken parses, authenticates, and filters signatures strictly based on structural assertions.
 func (m *JWTManager) ValidateToken(tokenStr string, expectedType TokenType) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -152,7 +142,6 @@ func (m *JWTManager) ValidateToken(tokenStr string, expectedType TokenType) (*Cu
 	return claims, nil
 }
 
-// ExtractToken strips down the incoming Authorization context bytes safely.
 func ExtractToken(authHeader string) (string, error) {
 	if authHeader == "" {
 		return "", sharedErrs.Unauthorized("missing authorization tracking token context header")

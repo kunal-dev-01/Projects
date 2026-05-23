@@ -88,7 +88,7 @@ func (a *AccountService) Register(ctx context.Context, req *dto.RegisterRequest)
 	return &dto.MessageResponse{
 		Message: "Account created - please check your email to verify your account",
 	}, nil
-} 
+}
 
 func (a *AccountService) ResendVerificationEmail(ctx context.Context, req *dto.ResendVerificationEmailRequest) (*dto.MessageResponse, error) {
 
@@ -117,6 +117,23 @@ func (a *AccountService) ResendVerificationEmail(ctx context.Context, req *dto.R
     }, nil
 }
 
+func (a *AccountService) VerifyEmail(ctx context.Context, req *dto.VerifyEmailRequest) (*dto.AuthResponse, error) {
+	userIDStr, err := a.tokenRepo.ConsumeEmailVerifyToken(ctx, req.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := sharedSecurity.ParseUUID(userIDStr)
+	if err != nil {
+		return nil, sharedError.BadRequest("Invalid token")
+	}
+
+	if err := a.userRepo.VerifyEmail(ctx, userID); err != nil {
+		return nil, err
+	}
+
+
+}
 
 
 // =============================================================================

@@ -67,7 +67,7 @@ type UserProfileResponse struct {
 	Timezone         string                  `json:"timezone"`
 	Locale           string                  `json:"locale"`
 	TwoFactorEnabled bool                    `json:"two_factor_enabled"`
-	Preferences      UserPreferencesResponse `json:"preferences"` // Integrated preferences schema
+	Preferences      UserPreferencesResponse `json:"preferences"`
 	CreatedAt        time.Time               `json:"created_at"`
 }
 

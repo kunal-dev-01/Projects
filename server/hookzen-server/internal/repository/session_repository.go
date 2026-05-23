@@ -72,7 +72,7 @@ func (s *SessionRepository) StoreSession(ctx context.Context, meta *SessionMetad
 
 	sessionKey := prefixSession + meta.ID
 	userKey := s.buildUserKey(meta.UserID)
-	userSetTTL := s.cfg.JWT.RefreshTokenDuration * 3 // Extended indexing window boundary
+	userSetTTL := s.cfg.JWT.RefreshTokenDuration
 
 	pipe := client.Pipeline()
 	pipe.Set(ctx, sessionKey, data, ttl)

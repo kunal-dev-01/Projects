@@ -29,7 +29,7 @@ type WebhookNotifications struct {
 }
 
 // Scan implements the sql.Scanner interface for pgx JSONB automated decoding.
-func (wn *WebhookNotifications) Scan(value interface{}) error {
+func (wn *WebhookNotifications) Scan(value any) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("models: type assertion to []byte failed for WebhookNotifications")

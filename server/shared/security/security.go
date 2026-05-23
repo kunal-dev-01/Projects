@@ -62,6 +62,14 @@ func GenerateOTP() string {
 	return fmt.Sprintf("%06d", n.Int64())
 }
 
+func ParseUUID(idStr string) (uuid.UUID, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("security: invalid UUID format: %w", err)
+	}
+	return id, nil
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ID GENERATION & FORMATTING
 // ─────────────────────────────────────────────────────────────────────────────
