@@ -71,6 +71,13 @@ type UserProfileResponse struct {
 	CreatedAt        time.Time               `json:"created_at"`
 }
 
+func (u *UserProfileResponse) ToAuthResponse(accessToken string) *AuthResponse {
+	return &AuthResponse{
+		AccessToken: accessToken,
+		User:        *u,
+	}
+}
+
 // AuthResponse is returned upon successful authentication (Refresh token goes to HttpOnly cookie).
 type AuthResponse struct {
 	AccessToken string              `json:"access_token"`

@@ -24,6 +24,17 @@ type SessionResponse struct {
 	City       string    `json:"city"`
 	Country    string    `json:"country"`
 	IsCurrent  bool      `json:"is_current"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiresAt  time.Time `json:"expires_at"`
+}
+
+func (s *SessionMetadata) ToResponse(currentSessionID string) *SessionResponse {
+	return &SessionResponse{
+		ID:         s.ID,
+		IP:         s.IP,
+		OS:         s.OS,
+		Browser:    s.Browser,
+		DeviceType: s.DeviceType,
+		City:       s.City,
+		Country:    s.Country,
+		IsCurrent:  s.ID == currentSessionID,
+	}
 }
